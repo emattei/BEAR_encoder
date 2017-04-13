@@ -245,7 +245,7 @@ public class BEARNA extends RNA {
 		
 		LinkedList<Integer> openBrackets=new LinkedList<Integer>();
 		TreeMap<Integer,Integer> pair=new TreeMap<Integer,Integer>();
-		String[] seq=sequence.split("");
+		//String[] seq=sequence.split("");
 		String[] str=structure.split("");
 		
 		for (int i=1;i<str.length;i++){
@@ -385,7 +385,7 @@ public class BEARNA extends RNA {
 
 		LinkedList<Integer> openBrackets=new LinkedList<Integer>();
 		TreeMap<Integer,Integer> pair=new TreeMap<Integer,Integer>();
-		String[] seq=sequence.split("");
+		//String[] seq=sequence.split("");
 		String[] str=structure.split("");
 		
 		
