@@ -5,30 +5,20 @@ import java.util.*;
 public class BEARNA extends RNA {
 	private String bear;
 	
-	public BEARNA(String name, String sequence, String secondaryStructure){
+	public BEARNA(String name, String sequence, String secondaryStructure,boolean circular) throws ParsingException{
 		super (name, sequence, secondaryStructure);
-		this.bear=BEARNA.encodeUsingBEAR_upgrade(sequence,secondaryStructure);
+		this.setBEAR(BEARNA.encodeUsingBEAR_upgrade(sequence,secondaryStructure,circular));
 	}
 	
 	
-	public BEARNA(RNA rna){
+	public BEARNA(RNA rna,boolean circular) throws ParsingException{
 		super(rna.getName(),rna.getSequence(),rna.getSecondaryStructure());
-		this.bear=BEARNA.encodeUsingBEAR_upgrade(rna.getSequence(),rna.getSecondaryStructure());
+		this.setBEAR(BEARNA.encodeUsingBEAR_upgrade(rna.getSequence(),rna.getSecondaryStructure(),circular));
 	}
 	
-	public BEARNA(){
-		this.setName("");
-		this.setSequence("");
-		this.setSecondaryStructure("");
-		this.bear="";
-	}
-	
+
 	public void setBEAR(String bear){
-		if (this.getSequence().length()==bear.length()){
-			this.bear=bear;
-		}else{
-			System.err.println("Secondary Structure and BEAR must have the same length.\n");
-		}
+		this.bear=bear;
 	}
 	
 	public String getBEAR(){
@@ -42,6 +32,7 @@ public class BEARNA extends RNA {
 			System.out.println("Empty");
 		}
 	}
+	
 	public String printable(){
 		String tmp=">"+this.getName()+"\n"+this.getSequence()+"\n"+this.getSecondaryStructure()+"\n"+this.getBEAR()+"\n";
 		return tmp;
@@ -61,6 +52,31 @@ public class BEARNA extends RNA {
 		}
 		return encoding;
 	}
+	
+	static char[] getLoop(char[] encoding,int start, int end,int length){
+		char[] LOOP={'j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
+		char[] MAXLOOP={'^'};
+		if(length-1<=LOOP.length-1){
+			for(int i=start;i<=end-1;i++){
+				encoding[i]=LOOP[length-1];
+			}
+		}else{
+			for(int i=start;i<=end-1;i++){
+				encoding[i]=MAXLOOP[0];
+			}
+		}
+		return encoding;
+	}
+	
+	static boolean isStemBranch(char encoding){	
+		char[] STEMBRANCH={'A','B','C','D','E','F','G','H','I','J'};
+		if(new String(STEMBRANCH).indexOf(encoding) == -1){		
+			return false;
+		}else{
+			return true;
+		}
+	}
+	
 	static char[] getStem(char[] encoding,int start,int end,int length){
 		char[] STEM={'a','b','c','d','e','f','g','h','i'};
 		char[] MAXSTEM={'='};
@@ -226,158 +242,22 @@ public class BEARNA extends RNA {
 	//first_father=(pair.get(keys.iterator().next()));
 	//System.out.println(first_father);
 	
-	public static String encodeUsingBEAR(String seqInput,String strInput){
+	
+	
+	//New Version including the BRANCHING structures
+	public static String encodeUsingBEAR_upgrade(String seqInput,String strInput, boolean circular){
 
 		
 		String sequence=seqInput;//input rna
 		String structure=strInput;//input secondary structure
-		Integer firstFather=0;//serve per tener traccia delle branching
-		Integer secondFather=-1;//serve per tener traccia delle branching
-		Integer open=0;//indice della parentesi aperta
-		Integer close=0;//indice della parentesi chiusa
-		Integer count=0;
-		Boolean exit=false;
-		char[] encoding=new char[sequence.length()];//encoding finale
-		
-		for (int z=0;z<encoding.length;z++){
-			encoding[z]=':';
-		}
-		
-		LinkedList<Integer> openBrackets=new LinkedList<Integer>();
-		TreeMap<Integer,Integer> pair=new TreeMap<Integer,Integer>();
-		//String[] seq=sequence.split("");
-		String[] str=structure.split("");
-		
-		for (int i=1;i<str.length;i++){
-			if (str[i].equals("(")){
-				openBrackets.addFirst(i);
-			}else if (str[i].equals(")")){
-				int tmp=openBrackets.pop();
-				pair.put(i, tmp);
-			}
-		}
-
-		for (Map.Entry<Integer, Integer> entry : pair.entrySet()){
-			
-			//System.out.println("chiuso: "+(entry.getKey()-1)+"	aperto: "+(entry.getValue()-1)+"\n");
-			if (secondFather==-1){
-				open = entry.getValue()-1;
-				close = entry.getKey()-1;
-				secondFather = open;
-				getLoop(encoding, open, close);
-				count=1;
-				/*for (int z=0;z<encoding.length;z++){
-					System.out.println(z+"\t"+encoding[z]);
-				}*/
-					
-			}else{
-				if(!exit){
-					if(entry.getValue()-1>open){
-						if(count!=0){
-							getStem(encoding,open,close,count);
-						}
-						count=1;
-						//qui finisce una prima non branching
-						open = (entry.getValue()-1);
-						close = (entry.getKey()-1);
-						firstFather=secondFather;
-						secondFather = open;
-						/*for (int z=0;z<encoding.length;z++){
-							System.out.println(z+"\t"+encoding[z]);
-						}*/
-						//System.out.println("nuova");
-						getLoop(encoding, open, close);
-						/*for (int z=0;z<encoding.length;z++){
-							System.out.println(z+"\t"+encoding[z]);
-						}*/
-					}else if(firstFather>(entry.getValue()-1)){
-						exit=true;
-						if (count!=0){
-							//System.out.println("qui"+open+"\t"+close);
-							getStem(encoding,open,close,count);
-						}
-						count=0;
-						//fine di un' altra braching e non ce ne sono altre dopo
-					}else{
-						//System.out.println("sonoqui1");
-						//System.out.println((open-(entry.getValue()-1))+"\t"+close+"\t"+(entry.getKey()-1));
-						if((open-(entry.getValue()-1))>=2 && ((entry.getKey()-1)-close)>=2){
-							//System.out.println("Case1");
-							if (count!=0){
-								getStem(encoding,open,close,count);
-							}
-							count=1;
-							getInternalLoopLeft(encoding,open,(entry.getValue()-1));
-							getInternalLoopRight(encoding,(entry.getKey()-1),close);
-							/*for (int z=0;z<encoding.length;z++){
-								System.out.println(z+"\t"+encoding[z]);
-							}*/
-						}else if((open-(entry.getValue()-1))==1 && ((entry.getKey()-1)-close)>=2){
-							//System.out.println("Case2");
-							if (count!=0){
-								getStem(encoding,open,close,count);
-							}
-							count=1;
-							getInternalLoopRight(encoding,(entry.getKey()-1),close);
-							/*for (int z=0;z<encoding.length;z++){
-								System.out.println(z+"\t"+encoding[z]);
-							}*/
-						}else if((open-(entry.getValue()-1))>=2 && ((entry.getKey()-1)-close)==1){
-							//System.out.println("Case3");
-							if (count!=0){
-								getStem(encoding,open,close,count);
-							}
-							count=1;
-							getInternalLoopLeft(encoding,open,(entry.getValue()-1));
-							/*for (int z=0;z<encoding.length;z++){
-								System.out.println(z+"\t"+encoding[z]);
-							}*/
-						}else{
-							//System.out.println("Case4");
-							count++;
-						}
-						open=(entry.getValue()-1);
-						close=(entry.getKey()-1);
-					}
-				}else{
-					//comincia una nuova non branching
-					if(firstFather<(entry.getValue()-1)){
-						open = (entry.getValue()-1);
-						close = (entry.getKey()-1);
-						firstFather=secondFather;
-						secondFather = open;
-						exit=false;
-						getLoop(encoding, open, close);
-						count=1;
-					}
-				}
-			}
-		}
-		//controllo se ci sono non branching da scrivere
-		if(!exit){
-			if(count!=0){
-				getStem(encoding,open,close,count);
-			}
-		//fine ultima non branching
-		}
-		return new String(encoding);
-	}
-	
-	
-	//Comprende Pure le branching
-	public static String encodeUsingBEAR_upgrade(String seqInput,String strInput){
-
-		
-		String sequence=seqInput;//input rna
-		String structure=strInput;//input secondary structure
-		Integer firstFather=0;//serve per tener traccia delle branching
-		Integer secondFather=-1;//serve per tener traccia delle branching
-		Integer open=0;//indice della parentesi aperta
-		Integer close=0;//indice della parentesi chiusa
+		Integer firstFather=0;//Index 1 for Branching structures
+		Integer secondFather=-1;//Index 2 for branching structures
+		Integer open=0;//open bracket index
+		Integer close=0;//closed bracket index
 		Integer count=0;
 		Boolean exit=false;
 		Boolean branch=false;
-		char[] encoding=new char[sequence.length()];//encoding finale
+		char[] encoding=new char[sequence.length()];//BEAR eccoding
 		
 		for (int z=0;z<encoding.length;z++){
 			encoding[z]=':';
@@ -553,7 +433,183 @@ public class BEARNA extends RNA {
 			}
 		//fine ultima non branching
 		//}
-		return new String(encoding);
+		if(circular && checkCircular(encoding)){
+			fixFinalBranch(encoding);
+			return new String(encoding);
+		}else{
+			return new String(encoding);
+		}
 	}
 	
+	static boolean checkCircular(char[] encoding) {
+		int start=0;
+		while(encoding[start]==':'){
+			start += 1;
+		}
+		if(isStemBranch(encoding[start])){
+			return true;
+		}else{
+			return false;
+		}
+	}
+
+
+	static char[] fixFinalBranch(char[] encoding){
+		int start = 0;
+		int end = encoding.length-1;
+		int len = 0;
+		while(encoding[start]==':'){
+			len += 1;
+			start += 1;
+		}
+		while(encoding[end]==':'){
+			len += 1;
+			end -= 1;
+		}
+		getLoop(encoding,0,start,len);
+		getLoop(encoding,end+1,encoding.length,len);
+		
+		return encoding;
+	}
+	
+	
+	
+	//Previous version without the BRANCHING
+	public static String encodeUsingBEAR(String seqInput,String strInput){
+
+		
+		//String sequence=seqInput;//input rna
+		String structure=strInput;//input secondary structure
+		Integer firstFather=0;//serve per tener traccia delle branching
+		Integer secondFather=-1;//serve per tener traccia delle branching
+		Integer open=0;//indice della parentesi aperta
+		Integer close=0;//indice della parentesi chiusa
+		Integer count=0;
+		Boolean exit=false;
+		char[] encoding=new char[structure.length()];//encoding finale
+		
+		for (int z=0;z<encoding.length;z++){
+			encoding[z]=':';
+		}
+		
+		LinkedList<Integer> openBrackets=new LinkedList<Integer>();
+		TreeMap<Integer,Integer> pair=new TreeMap<Integer,Integer>();
+		//String[] seq=sequence.split("");
+		String[] str=structure.split("");
+		
+		for (int i=1;i<str.length;i++){
+			if (str[i].equals("(")){
+				openBrackets.addFirst(i);
+			}else if (str[i].equals(")")){
+				int tmp=openBrackets.pop();
+				pair.put(i, tmp);
+			}
+		}
+
+		for (Map.Entry<Integer, Integer> entry : pair.entrySet()){
+			
+			//System.out.println("chiuso: "+(entry.getKey()-1)+"	aperto: "+(entry.getValue()-1)+"\n");
+			if (secondFather==-1){
+				open = entry.getValue()-1;
+				close = entry.getKey()-1;
+				secondFather = open;
+				getLoop(encoding, open, close);
+				count=1;
+				/*for (int z=0;z<encoding.length;z++){
+					System.out.println(z+"\t"+encoding[z]);
+				}*/
+					
+			}else{
+				if(!exit){
+					if(entry.getValue()-1>open){
+						if(count!=0){
+							getStem(encoding,open,close,count);
+						}
+						count=1;
+						//qui finisce una prima non branching
+						open = (entry.getValue()-1);
+						close = (entry.getKey()-1);
+						firstFather=secondFather;
+						secondFather = open;
+						/*for (int z=0;z<encoding.length;z++){
+							System.out.println(z+"\t"+encoding[z]);
+						}*/
+						//System.out.println("nuova");
+						getLoop(encoding, open, close);
+						/*for (int z=0;z<encoding.length;z++){
+							System.out.println(z+"\t"+encoding[z]);
+						}*/
+					}else if(firstFather>(entry.getValue()-1)){
+						exit=true;
+						if (count!=0){
+							//System.out.println("qui"+open+"\t"+close);
+							getStem(encoding,open,close,count);
+						}
+						count=0;
+						//fine di un' altra braching e non ce ne sono altre dopo
+					}else{
+						//System.out.println("sonoqui1");
+						//System.out.println((open-(entry.getValue()-1))+"\t"+close+"\t"+(entry.getKey()-1));
+						if((open-(entry.getValue()-1))>=2 && ((entry.getKey()-1)-close)>=2){
+							//System.out.println("Case1");
+							if (count!=0){
+								getStem(encoding,open,close,count);
+							}
+							count=1;
+							getInternalLoopLeft(encoding,open,(entry.getValue()-1));
+							getInternalLoopRight(encoding,(entry.getKey()-1),close);
+							/*for (int z=0;z<encoding.length;z++){
+								System.out.println(z+"\t"+encoding[z]);
+							}*/
+						}else if((open-(entry.getValue()-1))==1 && ((entry.getKey()-1)-close)>=2){
+							//System.out.println("Case2");
+							if (count!=0){
+								getStem(encoding,open,close,count);
+							}
+							count=1;
+							getInternalLoopRight(encoding,(entry.getKey()-1),close);
+							/*for (int z=0;z<encoding.length;z++){
+								System.out.println(z+"\t"+encoding[z]);
+							}*/
+						}else if((open-(entry.getValue()-1))>=2 && ((entry.getKey()-1)-close)==1){
+							//System.out.println("Case3");
+							if (count!=0){
+								getStem(encoding,open,close,count);
+							}
+							count=1;
+							getInternalLoopLeft(encoding,open,(entry.getValue()-1));
+							/*for (int z=0;z<encoding.length;z++){
+								System.out.println(z+"\t"+encoding[z]);
+							}*/
+						}else{
+							//System.out.println("Case4");
+							count++;
+						}
+						open=(entry.getValue()-1);
+						close=(entry.getKey()-1);
+					}
+				}else{
+					//comincia una nuova non branching
+					if(firstFather<(entry.getValue()-1)){
+						open = (entry.getValue()-1);
+						close = (entry.getKey()-1);
+						firstFather=secondFather;
+						secondFather = open;
+						exit=false;
+						getLoop(encoding, open, close);
+						count=1;
+					}
+				}
+			}
+		}
+		//controllo se ci sono non branching da scrivere
+		if(!exit){
+			if(count!=0){
+				getStem(encoding,open,close,count);
+			}
+		//fine ultima non branching
+		}
+		return new String(encoding);
+	}
+
 }
