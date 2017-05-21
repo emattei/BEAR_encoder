@@ -77,6 +77,24 @@ public class BEARNA extends RNA {
 		}
 	}
 	
+	static boolean isStem(char encoding){	
+		char[] STEM={'a','b','c','d','e','f','g','h','i','='};
+		if(new String(STEM).indexOf(encoding) == -1){		
+			return false;
+		}else{
+			return true;
+		}
+	}
+	
+	static boolean isPaired(char encoding){	
+		char[] STEM={'a','b','c','d','e','f','g','h','i','=','A','B','C','D','E','F','G','H','I','J'};
+		if(new String(STEM).indexOf(encoding) == -1){		
+			return false;
+		}else{
+			return true;
+		}
+	}
+	
 	static char[] getStem(char[] encoding,int start,int end,int length){
 		char[] STEM={'a','b','c','d','e','f','g','h','i'};
 		char[] MAXSTEM={'='};
@@ -472,6 +490,24 @@ public class BEARNA extends RNA {
 		return encoding;
 	}
 	
+	public void decode() throws ParsingException{
+		String secondaryStructure="";
+		
+		this.setSecondaryStructure(secondaryStructure);
+	}
+	
+	private static String decoder(String bearString){
+		String[] bearArray=bearString.split("");
+		String decoded="";
+		for(int i=0;i<bearArray.length;i++){
+			if (isPaired(bearArray[i].charAt(0))){
+				decoded+="";
+			}else{
+				decoded+=".";				
+			}
+		}
+		return decoded;
+	}
 	
 	
 	//Previous version without the BRANCHING
