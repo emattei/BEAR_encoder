@@ -1,5 +1,33 @@
 package bearEncoder;
 
+/*
+ * BEAR encoder
+ * 
+ * University of Rome "Tor Vergata"
+ *
+ *Developer:
+ * Eugenio Mattei : emattei.phd[at]gmail.com
+ * 
+ *Publication:
+ *	Nucleic Acids Res. 2014 Jun 1. DOI : 10.1093/nar/gku283
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ */
+
+
 public class RNA {
 	private String name;
 	private String sequence;
@@ -8,7 +36,11 @@ public class RNA {
 	public RNA(String name, String sequence, String secondaryStructure) throws ParsingException{
 		this.setName(name);
 		this.setSequence(sequence);
-		this.setSecondaryStructure(secondaryStructure);
+		if( !secondaryStructure.equals("")){
+			this.setSecondaryStructure(secondaryStructure);
+		}else{
+			this.secondaryStructure="";
+		}
 	}
 	
 	public RNA(String name, String sequence) throws ParsingException{
@@ -35,7 +67,11 @@ public class RNA {
 	
 	public void setSecondaryStructure(String secondaryStructure) throws ParsingException{
 		RNA.checkSecondaryStructure(secondaryStructure);
-		this.secondaryStructure=secondaryStructure;
+		if( this.sequence.length() == secondaryStructure.length() ){
+			this.secondaryStructure=secondaryStructure;
+		}else{
+			throw new ParsingException("Sequence and Seconddary Structure must have the same length!");
+		}
 	
 	}
 	
@@ -53,7 +89,7 @@ public class RNA {
 	}
 	
 	//Check secondary structure consistency
-	static void checkSecondaryStructure(String str) throws ParsingException{
+	static boolean checkSecondaryStructure(String str) throws ParsingException{
 		char[] cbuff = new char[1024 * 1024];
 		String patternSecondaryStructure="^[.()]*$";
 		
@@ -77,6 +113,7 @@ public class RNA {
         if(count!=0){
         	throw new ParsingException("Unbalanced parenthesis in secondary structure!");
         }
+        return true;
 	}
 	
 	//Check for nucleotides not present in IUPAC notation

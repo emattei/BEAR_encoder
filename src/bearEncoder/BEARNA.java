@@ -1,28 +1,79 @@
 package bearEncoder;
-import java.util.*;
 
+/*
+ * BEAR encoder
+ * 
+ * University of Rome "Tor Vergata"
+ *
+ *Developer:
+ * Eugenio Mattei : emattei.phd[at]gmail.com
+ * 
+ *Publication:
+ *	Nucleic Acids Res. 2014 Jun 1. DOI : 10.1093/nar/gku283
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ */
+
+import java.util.*;
 
 public class BEARNA extends RNA {
 	private String bear;
 	
-	public BEARNA(String name, String sequence, String secondaryStructure,boolean circular) throws ParsingException{
+	public BEARNA(String name, String sequence, String secondaryStructure,String bear,boolean circular) throws ParsingException{
 		super (name, sequence, secondaryStructure);
-		this.setBEAR(BEARNA.encodeUsingBEAR_upgrade(sequence,secondaryStructure,circular));
+		if( !bear.equals("") ){
+			this.setBEAR(bear);
+		}else{
+			this.setBEAR(BEARNA.encodeUsingBEAR_upgrade(secondaryStructure, circular));
+		}
+	}
+	
+	public BEARNA(String name, String sequence, String secondaryStructure, boolean circular) throws ParsingException{
+		super(name, sequence, secondaryStructure);
+		this.setBEAR(BEARNA.encodeUsingBEAR_upgrade(secondaryStructure, circular));
 	}
 	
 	
 	public BEARNA(RNA rna,boolean circular) throws ParsingException{
 		super(rna.getName(),rna.getSequence(),rna.getSecondaryStructure());
-		this.setBEAR(BEARNA.encodeUsingBEAR_upgrade(rna.getSequence(),rna.getSecondaryStructure(),circular));
+		this.setBEAR(BEARNA.encodeUsingBEAR_upgrade(rna.getSecondaryStructure(),circular));
 	}
 	
 
-	public void setBEAR(String bear){
-		this.bear=bear;
+	public void setBEAR(String bear) throws ParsingException{
+		if( bear.equals("") ){
+			this.bear = bear;
+		}else if (BEARNA.checkAlphabetBear(bear) ){
+			this.bear = bear;
+		}else{
+			throw new ParsingException("Format error for BEAR encoding!");
+		}
 	}
 	
 	public String getBEAR(){
 		return this.bear;
+	}
+	
+	static boolean checkAlphabetBear(String s){
+		String patternBear="^[abcdefghi=jklmnopqrstuvwxyz^!\\\"#$%&\\'\\(\\)+234567890>\\[\\]:ABCDEFGHIJKLMNOPQRSTUVW{YZ~?_|/\\\\}@]*$";
+		if(s.matches(patternBear)){
+			return true;
+		}else{
+			return false;
+		}
 	}
 	
 	public void print(){
@@ -263,10 +314,8 @@ public class BEARNA extends RNA {
 	
 	
 	//New Version including the BRANCHING structures
-	public static String encodeUsingBEAR_upgrade(String seqInput,String strInput, boolean circular){
+	public static String encodeUsingBEAR_upgrade(String strInput, boolean circular){
 
-		
-		String sequence=seqInput;//input rna
 		String structure=strInput;//input secondary structure
 		Integer firstFather=0;//Index 1 for Branching structures
 		Integer secondFather=-1;//Index 2 for branching structures
@@ -275,7 +324,7 @@ public class BEARNA extends RNA {
 		Integer count=0;
 		Boolean exit=false;
 		Boolean branch=false;
-		char[] encoding=new char[sequence.length()];//BEAR eccoding
+		char[] encoding=new char[structure.length()];//BEAR eccoding
 		
 		for (int z=0;z<encoding.length;z++){
 			encoding[z]=':';
@@ -492,7 +541,6 @@ public class BEARNA extends RNA {
 	
 	public void decode() throws ParsingException{
 		String secondaryStructure="";
-		
 		this.setSecondaryStructure(secondaryStructure);
 	}
 	

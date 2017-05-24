@@ -1,0 +1,33 @@
+BEAR_encoder
+Version: 2.0
+
+Developed by Eugenio Mattei
+
+Centre for Molecular Bioinformatics
+University of Rome "Tor Vergata"
+
+Original : September 2014
+
+======================================
+
+Typical usage:
+
+java -jar BEAR_encoder.jar -i <sequence.fasta> 
+
+   Mandatory	qualifiers:
+   -i             sequence   Sequence(s) filename in FASTA or FASTB format
+
+   Additional (Optional) qualifiers:
+   -o                    string   Path to output file name.
+                                  
+   -c                    boolean  [false] Assume the molecule to be circular.
+   
+   -h                             Report command line options and exit.
+
+For more information please check the documentation page:
+
+
+For questions, support, bug reports, proposals, cooperations
+or any other communication, feel free to mail me at:
+
+emattei.phd[at]gmail.com

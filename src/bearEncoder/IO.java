@@ -3,8 +3,124 @@ import java.io.*;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
+
+/*
+ * BEAR encoder
+ * 
+ * University of Rome "Tor Vergata"
+ *
+ *Developer:
+ * Eugenio Mattei : emattei.phd[at]gmail.com
+ * 
+ *Publication:
+ *	Nucleic Acids Res. 2014 Jun 1. DOI : 10.1093/nar/gku283
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ */
+
+
 public class IO {
-	static LinkedList<BEARNA> readFA(String path,boolean circular){
+	
+	
+	static LinkedList<BEARNA> readFA(String path, boolean circular){
+		FileReader f = null;
+		try{
+			f = new FileReader(path);
+		}catch (IOException ioException){
+			ioException.printStackTrace();
+		}
+		int lineNumber=0;
+		LinkedList<BEARNA> tmp = new LinkedList<BEARNA>();
+		
+		try{
+			BufferedReader b = new BufferedReader(f);
+			String s,name="",seq="",str="",bear="";
+			boolean start=true;
+			
+			while ((s=b.readLine())!=null){
+				if(start){
+					if((s.startsWith(">"))){
+						lineNumber++;
+						name=s.substring(1).replaceAll("[\r\n]","");
+						start=false;
+					}else{
+						IO.writeErrorFile("Line "+lineNumber+": FASTA format error!");
+					}
+				}else{
+					String check= (s.trim().replaceAll("[\r\n]",""));
+					if(s.startsWith(">")){
+						if(bear.equals("") && str.equals("")){
+							IO.writeErrorFile("Line "+lineNumber+": Missing Secondary structure and BEAR. Sequence name: "+name+" \n");
+						}else{
+							try{
+								//System.out.println(name+"\n"+seq+"\n"+str+"\n"+bear+"\n");
+								tmp.add(new BEARNA(name,seq,str,bear,circular));
+							}catch(ParsingException ex){
+								IO.writeErrorFile("Line "+lineNumber+": FASTA format error. Sequence name: "+name+" \n"+ex.getMessage());
+							}
+						}
+						lineNumber++;
+						name=s.substring(1).replaceAll("[\r\n]","");
+						seq="";
+						str="";
+						bear="";
+					}else if( IO.isNucleotide(check) ){
+						seq+=check;
+					}else if( IO.isSecondaryStructure(check) ){
+						str+=check;
+					}else if( IO.isBear(check) ){
+						bear+=check;
+					}else if( !check.equals("") ){
+						IO.writeErrorFile("Line "+lineNumber+": Unrecognize character in fasta. Sequence name: "+name+" \n");
+						s=b.readLine();
+						lineNumber++;
+						while( !s.startsWith(">") && s!=null ){
+							s=b.readLine();
+							lineNumber++;
+						}
+						name=s.substring(1).replaceAll("[\r\n]","");
+						seq="";
+						str="";
+						bear="";
+					}
+				}
+			}
+			if(bear.equals("") && str.equals("")){
+				IO.writeErrorFile("Line "+lineNumber+": Missing Secondary structure and BEAR. Sequence name: "+name+" \n");
+			}else{
+				try{
+					tmp.add(new BEARNA(name,seq,str,bear,circular));
+				}catch(ParsingException ex){
+					IO.writeErrorFile("Line "+lineNumber+": FASTA format error. Sequence name: "+name+" \n"+ex.getMessage());
+				}
+			}
+		}catch(IOException ioException){ioException.printStackTrace();}
+		
+		try {
+			f.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return tmp;
+	}
+	
+	
+	
+	static LinkedList<BEARNA> readFA_test(String path,boolean circular){
 		FileReader f = null;
 		try{
 			f = new FileReader(path);
@@ -92,6 +208,15 @@ public class IO {
 		}
 	}
 	
+	static boolean isBear(String s){
+		String patternBear=".*[abcdefghi=jklmnopqrstuvwxyz^!\\\"#$%&\\'\\(\\)+234567890>\\[\\]:ABCDEFGHIJKLMNOPQRSTUVW{YZ~?_|/\\\\}@]+";
+		if(s.matches(patternBear)){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
 	static void saveOutput(String s,ListIterator<BEARNA> lit){
 		try {
 		        File statText = new File(s);
@@ -138,5 +263,20 @@ public class IO {
 				}
 		    }
 	}
+
+	public void printHelp(){
+		InputStream is=getClass().getResourceAsStream("/README");
+		InputStreamReader isr=new InputStreamReader(is);
+
+		try{
+			BufferedReader b = new BufferedReader(isr);
+			String s;
 	
+			while ((s=b.readLine())!=null){
+				System.out.println(s);
+			}
+			
+		}catch(IOException ioException){ioException.printStackTrace();}
+
+	}
 }
